@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const Animal = sequelize.define('animal', {
+    const Category = sequelize.define('Category', {
         id: {
             type: DataTypes.UUID,
             primaryKey: true,
@@ -7,11 +7,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         name: {
             type: DataTypes.STRING,
-            required: true
-        },
-        type: {
-            type: DataTypes.ENUM('dog', 'cat')
-        },
+            allowNull: false
+        }
     })
-    return Animal;
+
+    return Category;
 }
