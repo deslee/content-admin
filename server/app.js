@@ -4,8 +4,6 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const { parse } = require('url')
 
-// data
-const data = require('./data')
 // middleware
 const apolloServer = require('./graphql/apollo')
 
@@ -16,8 +14,6 @@ const nextApp = next({ dev })
 const handler = nextApp.getRequestHandler()
 
 const loader = () => nextApp.prepare()
-    .then(() => data.sequelize.sync())
-    .then(() => data.seed())
     .then(() => {
         const app = express()
         app.use(cookieParser())

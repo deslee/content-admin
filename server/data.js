@@ -1,77 +1,40 @@
-const Sequelize = require('sequelize');
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: './database.sqlite'
-});
+const redis = require('redis')
+const { promisify } = require('util');
+const client = redis.createClient()
 
-const Site = require('./models/site')(sequelize, Sequelize)
-const Category = require('./models/category')(sequelize, Sequelize)
-const Asset = require('./models/asset')(sequelize, Sequelize)
-const Post = require('./models/post')(sequelize, Sequelize)
-const Slice = require('./models/slice')(sequelize, Sequelize)
-const AssetSlice = require('./models/assetSlice')(sequelize, Sequelize)
+const hmset = promisify(client.hmset).bind(client);
+const sadd = promisify(client.sadd).bind(client);
+const srem = promisify(client.srem).bind(client)
+const smembers = promisify(client.smembers).bind(client);
+const hgetall = promisify(client.hgetall).bind(client);
+const del = promisify(client.del).bind(client);
 
-Category.belongsTo(Site, {
-    foreignKey: {
-        allowNull: false,
-        field: 'siteId'
-    },
-    as: 'site'
-})
-Site.hasMany(Category, {
-    foreignKey: 'siteId'
-})
+export function upsertSite(site) {
+    if (!site.id) {
+        site.id = uuidv4();
+    }
+    return hmset(`sites:${site.id}`, site)
+        .then(() => site)
+}
 
-Post.belongsTo(Category, {
-    foreignKey: {
-        allowNull: false,
-        field: 'categoryId'
-    },
-    as: 'category'
-})
-Category.hasMany(Post, {
-    foreignKey: 'categoryId'
-})
+export function deleteSite(siteId) {
+    return this.del(`sites:${siteId}`)
+        .then(() => ({
+            success: true
+        }))
+}
 
-Slice.belongsTo(Post, {
-    foreignKey: {
-        allowNull: false,
-        field: 'postId'
-    },
-    as: 'post'
-})
-Post.hasMany(Slice, {
-    foreignKey: 'postId'
-})
+export function upsertCategory(category) {
+    if (!category.id) {
+        category.id = uuidv4();
+    }
+    return hmset(`categories:${category.id}`, category)
+        .then(() => category)
+}
 
-Asset.belongsToMany(Slice, {
-    through: AssetSlice,
-    foreignKey: 'assetId'
-})
-
-const includeSliceAsset = Slice.belongsToMany(Asset, {
-    through: AssetSlice,
-    foreignKey: 'sliceId'
-})
-
-const seed = () => Promise.all([
-])
-
-module.exports = {
-    Sequelize,
-    sequelize,
-
-    models: {
-        Site,
-        Category,
-        Asset,
-        Post,
-        Slice,
-        AssetSlice
-    },
-    associations: {
-        includeSliceAsset
-    },
-
-    seed
-};
+export function deleteCategory(categoryId) {
+    return this.del(`categories:${categoryId}`)
+        .then(() => ({
+            success: true
+        }))
+}

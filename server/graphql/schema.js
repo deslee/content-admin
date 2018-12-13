@@ -1,80 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server');
-
-// Type definitions define the "shape" of your data and specify
-// which ways the data can be fetched from the GraphQL server.
-const typeDefs = gql`
-    # Comments in GraphQL are defined with the hash (#) symbol.
-  
-    # This "Book" type can be used in other type declarations.
-    enum SliceType {
-        PARAGRAPH
-        IMAGE
-        VIDEO
-    }
-
-    enum AssetType {
-        IMAGE
-    }
-
-    type Asset {
-        id: String
-        title: String
-        type: AssetType
-        description: String
-        url: String
-    }
-
-    type ImageSlice {
-        id: String
-        type: SliceType
-        asset: [Asset]
-    }
-
-    type VideoSlice {
-        id: String
-        type: SliceType
-        url: String
-        loop: Boolean
-        autoplay: Boolean
-    }
-
-    type ParagraphSlice {
-        id: String
-        type: SliceType
-        text: String
-    }
-
-    union Slice = ImageSlice | VideoSlice | ParagraphSlice
-
-    type Post {
-        id: String
-        title: String
-        date: String
-        password: String
-        slices: [Slice]
-    }
-
-    type Category {
-        id: String
-        name: String
-        posts: [Post]
-    }
-
-    type Site {
-        id: String
-        name: String
-        categories: [Category]
-    }
-
-  
-    # The "Query" type is the root of all GraphQL queries.
-    # (A "Mutation" type will be covered later on.)
-    type Query {
-      sites: [Site]
-    }
-  `;
-
-
+const typeDefs = require('./typedefs')
 
 // Resolvers define the technique for fetching the types in the
 // schema.  We'll retrieve books from the "books" array above.
@@ -95,15 +20,61 @@ const resolvers = {
             return null
         }
     },
-    Query: {
-        sites: (parent, args, { dataSources }, info) => { 
-            const includeCategories = true
-            const includePosts = true 
-            const includeSlices = true 
-            const includeAssets = true
-            return dataSources.site.getSites({includeCategories, includePosts, includeSlices, includeAssets})
-        },
+    Response: {
+        __resolveType(obj, context, info) {
+            if (obj.Site) return 'SiteResponse'
+            if (obj.Post) return 'PostResponse'
+            if (obj.Category) return 'CategoryResponse'
+            if (obj.Asset) return 'AssetResponse'
+            if (obj.Slice) return 'SliceResponse'
+            return null
+        }
     },
+    Query: {
+        sites: async (parent, args, { dataSources: { cmsData } }, info) => {
+            return await cmsData.getSites()
+        },
+        site: async (parent, { siteId }, { dataSources: { cmsData } }, info) => {
+            return await cmsData.getSite(siteId)
+        },
+        post: async (parent, { postId }, { dataSources: { cmsData } }, info) => {
+            return await cmsData.getPost(postId)
+        }
+    },
+    Site: {
+        posts: (site, _, { dataSources: { cmsData } }) => {
+            var posts = cmsData.getPostsForSite(site.id);
+            return posts;
+        }
+    },
+    Mutation: {
+        upsertSite: async (_, { site }, { dataSources: { cmsData } }) => {
+            const upsertedSite = await cmsData.upsertSite(site)
+            return {
+                success: true,
+                site: upsertedSite
+            }
+        },
+        upsertPost: async (_, { post, siteId }, { dataSources: { cmsData } }) => {
+            const upsertedPost = await cmsData.upsertPost(post, siteId)
+            return {
+                success: true,
+                post: upsertedPost
+            }
+        },
+        deleteSite: async (_, { siteId }, { dataSources: { cmsData } }) => {
+            await cmsData.deleteSite(siteId);
+            return {
+                success: true
+            }
+        },
+        deletePost: async (_, { postId }, { dataSources: { cmsData } }) => {
+            await cmsData.deletePost(postId);
+            return {
+                success: true
+            }
+        }
+    }
 };
 
 module.exports = {
