@@ -6,9 +6,9 @@ const { parse } = require('url')
 
 // data
 const data = require('./data')
-
 // middleware
-const animalRouter = require('./routes/animals')
+const apolloServer = require('./graphql/apollo')
+
 
 const dev = process.env.NODE_ENV !== 'production'
 
@@ -22,10 +22,9 @@ const loader = () => nextApp.prepare()
         const app = express()
         app.use(cookieParser())
         app.use(bodyParser.json())
+        apolloServer.applyMiddleware({ app })        
 
         app.use(express.static('static'))
-
-        app.use('/animals', animalRouter(data));
 
         app.get('*', (req, res) => {
             // Be sure to pass `true` as the second argument to `url.parse`.
