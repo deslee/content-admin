@@ -23,6 +23,10 @@ module.exports = {
             sites: async (_, args, { dataSources: { cmsData } }) => {
                 const sites = await cmsData.getSites();
                 return sites;
+            },
+            site: async (_, { siteId }, { dataSources: { cmsData } }) => {
+                const site = await cmsData.getSite(siteId);
+                return site;
             }
         },
         Mutation: {
@@ -39,6 +43,12 @@ module.exports = {
                     success: true
                 }
             },
+        },
+        Post: {
+            site: async (post, args, { dataSources: { cmsData } }) => {
+                const site = await cmsData.getSiteFromPostId(post.id);
+                return site;
+            }
         }
     }
 }

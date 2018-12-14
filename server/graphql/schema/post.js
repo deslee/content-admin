@@ -3,6 +3,7 @@ module.exports = {
     type Post {
         id: String
         title: String
+        site: Site
         date: String
         password: String
         categories: [Category]
@@ -11,6 +12,7 @@ module.exports = {
 
     input PostInput {
         id: String
+        siteId: String!
         title: String
         date: String
         password: String
@@ -23,5 +25,38 @@ module.exports = {
         success: Boolean!
         message: String
     }
-    `
+    `,
+    resolvers: {
+        Query: {
+            posts: async(_, { siteId }, { dataSources: { cmsData } }) => {
+                const posts = await cmsData.getPostsForSite(siteId);
+                return posts;
+            },
+            post: async(_, { postId }, { dataSources: { cmsData } }) => {
+                const posts = await cmsData.getPost(postId);
+                return posts;
+            }
+        },
+        Mutation: {
+            upsertPost: async (_, { post }, { dataSources: { cmsData } }) => {
+                const upsertedPost = await cmsData.upsertPost(post);
+                return {
+                    success: true,
+                    post: upsertedPost
+                }
+            }
+        },
+        Site: {
+            posts: async (site, args, { dataSources: { cmsData } } ) => {
+                const posts = await cmsData.getPostsForSite(site.id);
+                return posts;
+            }
+        },
+        Category: {
+            posts: async (category, args, { dataSources: { cmsData } } ) => {
+                const posts = await cmsData.getPostsForCategory(category.id);
+                return posts;
+            }
+        }
+    }
 }

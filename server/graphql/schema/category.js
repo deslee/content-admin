@@ -12,5 +12,19 @@ module.exports = {
         success: Boolean!
         message: String
     }
-    `
+    `,
+    resolvers: {
+        Post: {
+            categories: async (post, args, { dataSources: { cmsData } } ) => {
+                const categories = await cmsData.getCategoriesForPost(post.id);
+                return categories;
+            }
+        },
+        Site: {
+            categories: async (site, args, { dataSources: { cmsData } } ) => {
+                const categories = await cmsData.getCategoriesForSite(site.id);
+                return categories;
+            }
+        }
+    }
 }

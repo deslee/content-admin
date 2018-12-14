@@ -7,15 +7,18 @@ module.exports = {
     }
 
     interface Slice {
+        id: String!
         type: SliceType
     }
 
     type ImageSlice implements Slice {
+        id: String!
         type: SliceType
         asset: [Asset]
     }
 
     type VideoSlice implements Slice {
+        id: String!
         type: SliceType
         url: String
         loop: Boolean
@@ -23,11 +26,13 @@ module.exports = {
     }
 
     type ParagraphSlice implements Slice {
+        id: String!
         type: SliceType
         text: String
     }
 
     input SliceInput {
+        id: String
         type: SliceType
         url: String
         loop: Boolean

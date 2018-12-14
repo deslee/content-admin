@@ -97,16 +97,16 @@ const Slice = sequelize.define('slice', {
             key: 'id'
         }
     },
-    paragraph_text: {
+    text: {
         type: Sequelize.TEXT('long')
     },
-    video_url: {
+    url: {
         type: Sequelize.STRING
     },
-    video_loop: {
+    loop: {
         type: Sequelize.BOOLEAN
     },
-    video_autoplay: {
+    autoplay: {
         type: Sequelize.BOOLEAN
     },
     data: {
@@ -214,6 +214,7 @@ Site.hasMany(AssetSlice)
 AssetSlice.belongsTo(Site)
 Site.hasMany(PostCategory)
 PostCategory.belongsTo(Site)
+Post.hasMany(Slice)
 
 module.exports = {
     sequelize, Sequelize,
