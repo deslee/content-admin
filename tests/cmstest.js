@@ -4,137 +4,277 @@ const sequelize = new Sequelize({
     storage: './database.sqlite'
 });
 
-const Site = require('../server/models/site')(sequelize, Sequelize)
-const Category = require('../server/models/category')(sequelize, Sequelize)
-const Asset = require('../server/models/asset')(sequelize, Sequelize)
-const Post = require('../server/models/post')(sequelize, Sequelize)
-const Slice = require('../server/models/slice')(sequelize, Sequelize)
-const AssetSlice = require('../server/models/assetSlice')(sequelize, Sequelize)
-
-Category.belongsTo(Site, {
-    foreignKey: {
-        allowNull: false,
-        field: 'siteId'
+const Site = sequelize.define('site', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
     },
-    as: 'site'
-})
-Site.hasMany(Category, {
-    foreignKey: 'siteId'
-})
-
-Post.belongsTo(Category, {
-    foreignKey: {
-        allowNull: false,
-        field: 'categoryId'
+    name: {
+        type: Sequelize.STRING,
+        allowNull: false
     },
-    as: 'category'
-})
-Category.hasMany(Post, {
-    foreignKey: 'categoryId'
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
 })
 
-Slice.belongsTo(Post, {
-    foreignKey: {
-        allowNull: false,
-        field: 'postId'
+const Category = sequelize.define('category', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
     },
-    as: 'post'
-})
-Post.hasMany(Slice, {
-    foreignKey: 'postId'
-})
-
-Asset.belongsToMany(Slice, {
-    through: AssetSlice,
-    foreignKey: 'assetId'
-})
-
-const includeSliceAsset = Slice.belongsToMany(Asset, {
-    through: AssetSlice,
-    foreignKey: 'sliceId'
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    name: {
+        type: Sequelize.STRING,
+        allowNull: false
+    }
 })
 
-var siteId = '';
+const Post = sequelize.define('post', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    title: {
+        type: Sequelize.STRING
+    },
+    date: {
+        type: Sequelize.DATE
+    },
+    password: {
+        type: Sequelize.STRING
+    },
+    passwordSalt: {
+        type: Sequelize.STRING
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
+});
 
-sequelize.sync().then(() => {
-    console.log('synced')
-}).then(() => Site.create({
-    name: 'Site1'
-})).then((site) => {
-    siteId = site.id;
-    return Category.create({
-        name: 'Main',
-        siteId: site.id
-    })
-}).then((category) => {
-    return Post.create({
-        title: 'First post!',
-        date: new Date(),
-        categoryId: category.id
-    })
-}).then(post => {
-    return Promise.all([
-        Slice.create({
-            type: 'paragraph',
-            paragraph_text: 'Hello world!',
-            postId: post.id
-        }),
-        Slice.create({
-            type: 'video',
-            video_url: 'http://youtube.com',
-            video_loop: false,
-            video_autoplay: true,
-            postId: post.id
-        }),
-        Slice.create({
-            type: 'images',
-            postId: post.id
-        }),
-        Asset.create({
-            title: 'my image',
-            type: 'image',
-            description: 'description for my image',
-            url: 'http://placehold.it/500/500'
-        }),
-        Asset.create({
-            title: 'another image',
-            type: 'image',
-            description: 'description for another image',
-            url: 'http://placehold.it/600/600'
-        })
-    ])
-}).then(([slice1, slice2, slice3, asset1, asset2]) => {
-    return Promise.all([
-        AssetSlice.create({
-            sliceId: slice3.id,
-            assetId: asset1.id
-        }),
-        AssetSlice.create({
-            sliceId: slice3.id,
-            assetId: asset2.id
-        })
-    ])
-}).then(() => {
-    console.log('done... querying')
-}).then(() => {
-    return Site.findByPk(siteId, {
-        include: [
-            {
-                model: Category,
-                include: [
-                    {
-                        model: Post,
-                        include: [
-                            {
-                                model: Slice,
-                                include: includeSliceAsset
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    })
-}).then(site => {
-    console.log(JSON.stringify(site.toJSON(), null, 2));
+const Slice = sequelize.define('slice', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    type: {
+        type: Sequelize.ENUM('paragraph', 'image', 'video')
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    postId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Post,
+            key: 'id'
+        }
+    },
+    paragraph_text: {
+        type: Sequelize.TEXT('long')
+    },
+    video_url: {
+        type: Sequelize.STRING
+    },
+    video_loop: {
+        type: Sequelize.BOOLEAN
+    },
+    video_autoplay: {
+        type: Sequelize.BOOLEAN
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
 })
+
+const Asset = sequelize.define('asset', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    title: {
+        type: Sequelize.STRING
+    },
+    type: {
+        type: Sequelize.ENUM('image')
+    },
+    description: {
+        type: Sequelize.TEXT('medium')
+    },
+    url: {
+        type: Sequelize.STRING
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
+})
+
+const AssetSlice = sequelize.define('assetslice', {
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    assetId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Asset,
+            key: 'id'
+        }
+    },
+    sliceId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Slice,
+            key: 'id'
+        }
+    },
+})
+
+const PostCategory = sequelize.define('postcategory', {
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    postId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Post,
+            key: 'id'
+        }
+    },
+    categoryId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Category,
+            key: 'id'
+        }
+    },
+})
+
+// associations to / from site
+Site.hasMany(Post)
+Post.belongsTo(Site)
+Site.hasMany(Category)
+Category.belongsTo(Site)
+Site.hasMany(Slice)
+Slice.belongsTo(Site)
+Site.hasMany(Asset)
+Asset.belongsTo(Site)
+Site.hasMany(AssetSlice)
+AssetSlice.belongsTo(Site)
+Site.hasMany(PostCategory)
+PostCategory.belongsTo(Site)
+
+// async function run() {
+//     await sequelize.sync();
+//     console.log('synced');
+
+//     var site = await Site.create({
+//         name: 'Desmond\'s blog',
+//         data: {
+//             foo: 'bar'
+//         }
+//     })
+
+//     console.log('created a site', site.toJSON());
+
+//     var post = await Post.create({
+//         siteId: site.id,
+//         title: 'First post!',
+//         date: new Date(),
+//         data: {
+//             foo: 'bar'
+//         }
+//     })
+
+//     var slice = await Slice.create({
+//         type: 'image',
+//         siteId: site.id,
+//         postId: post.id,
+//         data: {
+//             'foo': 'bar'
+//         }
+//     })
+
+//     var asset = await Asset.create({
+//         siteId: site.id,
+//         title: 'My picture',
+//         type: 'image',
+//         description: 'This is my pretty picture',
+//         url: 'http://google.com',
+//         data: {
+//             foo: 'bar'
+//         }
+//     })
+
+//     var assetSlice = await AssetSlice.create({
+//         siteId: site.id,
+//         assetId: asset.id,
+//         sliceId: slice.id
+//     })
+
+//     var category = await Category.create({
+//         siteId: site.id,
+//         name: 'Artwork'
+//     })
+
+//     var postCategory = await PostCategory.create({
+//         siteId: site.id,
+//         postId: post.id,
+//         categoryId: category.id
+//     })
+// }
+
+// run().then(() => {
+//     console.log('done!')
+// })

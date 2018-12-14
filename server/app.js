@@ -1,19 +1,25 @@
 const express = require('express')
+const { ApolloServer } = require('apollo-server-express');
 const next = require('next')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const { parse } = require('url')
 
 // middleware
-const apolloServer = require('./graphql/apollo')
+const apolloServerConfig = require('./graphql/apollo')
 
+// data
+const data = require('./data')
 
 const dev = process.env.NODE_ENV !== 'production'
 
 const nextApp = next({ dev })
 const handler = nextApp.getRequestHandler()
 
+const apolloServer = new ApolloServer(apolloServerConfig);
+
 const loader = () => nextApp.prepare()
+    .then(() => data.sequelize.sync())
     .then(() => {
         const app = express()
         app.use(cookieParser())

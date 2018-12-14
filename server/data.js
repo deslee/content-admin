@@ -1,40 +1,223 @@
-const redis = require('redis')
-const { promisify } = require('util');
-const client = redis.createClient()
+const Sequelize = require('sequelize');
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite'
+});
 
-const hmset = promisify(client.hmset).bind(client);
-const sadd = promisify(client.sadd).bind(client);
-const srem = promisify(client.srem).bind(client)
-const smembers = promisify(client.smembers).bind(client);
-const hgetall = promisify(client.hgetall).bind(client);
-const del = promisify(client.del).bind(client);
-
-export function upsertSite(site) {
-    if (!site.id) {
-        site.id = uuidv4();
+const Site = sequelize.define('site', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    name: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
     }
-    return hmset(`sites:${site.id}`, site)
-        .then(() => site)
-}
+})
 
-export function deleteSite(siteId) {
-    return this.del(`sites:${siteId}`)
-        .then(() => ({
-            success: true
-        }))
-}
-
-export function upsertCategory(category) {
-    if (!category.id) {
-        category.id = uuidv4();
+const Category = sequelize.define('category', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    name: {
+        type: Sequelize.STRING,
+        allowNull: false
     }
-    return hmset(`categories:${category.id}`, category)
-        .then(() => category)
-}
+})
 
-export function deleteCategory(categoryId) {
-    return this.del(`categories:${categoryId}`)
-        .then(() => ({
-            success: true
-        }))
+const Post = sequelize.define('post', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    title: {
+        type: Sequelize.STRING
+    },
+    date: {
+        type: Sequelize.DATE
+    },
+    password: {
+        type: Sequelize.STRING
+    },
+    passwordSalt: {
+        type: Sequelize.STRING
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
+});
+
+const Slice = sequelize.define('slice', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    type: {
+        type: Sequelize.ENUM('paragraph', 'image', 'video')
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    postId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Post,
+            key: 'id'
+        }
+    },
+    paragraph_text: {
+        type: Sequelize.TEXT('long')
+    },
+    video_url: {
+        type: Sequelize.STRING
+    },
+    video_loop: {
+        type: Sequelize.BOOLEAN
+    },
+    video_autoplay: {
+        type: Sequelize.BOOLEAN
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
+})
+
+const Asset = sequelize.define('asset', {
+    id: {
+        type: Sequelize.UUID,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4
+    },
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    title: {
+        type: Sequelize.STRING
+    },
+    type: {
+        type: Sequelize.ENUM('image')
+    },
+    description: {
+        type: Sequelize.TEXT('medium')
+    },
+    url: {
+        type: Sequelize.STRING
+    },
+    data: {
+        type: Sequelize.JSON,
+        allowNull: false
+    }
+})
+
+const AssetSlice = sequelize.define('assetslice', {
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    assetId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Asset,
+            key: 'id'
+        }
+    },
+    sliceId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Slice,
+            key: 'id'
+        }
+    },
+})
+
+const PostCategory = sequelize.define('postcategory', {
+    siteId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Site,
+            key: 'id'
+        }
+    },
+    postId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Post,
+            key: 'id'
+        }
+    },
+    categoryId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+            model: Category,
+            key: 'id'
+        }
+    },
+})
+
+// associations to / from site
+Site.hasMany(Post)
+Post.belongsTo(Site)
+Site.hasMany(Category)
+Category.belongsTo(Site)
+Site.hasMany(Slice)
+Slice.belongsTo(Site)
+Site.hasMany(Asset)
+Asset.belongsTo(Site)
+Site.hasMany(AssetSlice)
+AssetSlice.belongsTo(Site)
+Site.hasMany(PostCategory)
+PostCategory.belongsTo(Site)
+
+module.exports = {
+    sequelize, Sequelize,
+
+    // models
+    Site, Category, Post, Slice, Asset, AssetSlice, PostCategory, 
 }
