@@ -1,6 +1,4 @@
-const { ApolloServer, gql } = require('apollo-server');
-const { typeDef: Asset } = require('./schema/asset')
-// TODO: import from single index.js and merge
+const { typeDef: Asset, resolvers: assetResolvers } = require('./schema/asset')
 const { typeDef: Category, resolvers: categoryResolvers } = require('./schema/category')
 const { typeDef: Post, resolvers: postResolvers } = require('./schema/post')
 const { typeDef: Shared, resolvers: sharedResolvers } = require('./schema/shared')
@@ -31,5 +29,5 @@ type Mutation {
 
 module.exports = {
     typeDefs: [Shared, Asset, Category, Post, Site, Slice, Query, Mutation],
-    resolvers: merge(resolvers, categoryResolvers, siteResolvers, sharedResolvers, sliceResolvers, postResolvers)
+    resolvers: merge(resolvers, categoryResolvers, siteResolvers, sharedResolvers, assetResolvers, sliceResolvers, postResolvers)
 }

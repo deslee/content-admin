@@ -1,7 +1,13 @@
 const data = require('../server/data');
 var assert = require('assert');
 const CmsDataSource = require('../server/graphql/datasources/cmsDataSource');
-const { resolvers } = require('../server/graphql/schema/')
+
+const { resolvers: assetResolvers } = require('../server/graphql/schema/asset')
+const { resolvers: categoryResolvers } = require('../server/graphql/schema/category')
+const { resolvers: postResolvers } = require('../server/graphql/schema/post')
+const { resolvers: sharedResolvers } = require('../server/graphql/schema/shared')
+const { resolvers: siteResolvers } = require('../server/graphql/schema/site')
+const { resolvers: sliceResolvers } = require('../server/graphql/schema/slice')
 
 describe('Graphql Integration Tests', () => {
     const cmsData = new CmsDataSource();
@@ -12,7 +18,7 @@ describe('Graphql Integration Tests', () => {
 
         describe('Upsert logic', () => {
             it('Should create a site when upserting with no id', async function () {
-                const response = await resolvers.siteResolvers.Mutation.upsertSite(
+                const response = await siteResolvers.Mutation.upsertSite(
                     null, {
                         site: {
                             name: 'Desmond\'s test site'
@@ -24,7 +30,7 @@ describe('Graphql Integration Tests', () => {
                 assert(response.site.id, 'site id does not exist');
                 siteId = response.site.id;
 
-                const queryResponse = await resolvers.siteResolvers.Query.site(
+                const queryResponse = await siteResolvers.Query.site(
                     null, { siteId }, context
                 )
 
@@ -33,7 +39,7 @@ describe('Graphql Integration Tests', () => {
             });
 
             it('Should update a site when upserting with an id', async function () {
-                const response = await resolvers.siteResolvers.Mutation.upsertSite(
+                const response = await siteResolvers.Mutation.upsertSite(
                     null, {
                         site: {
                             id: siteId,
@@ -44,7 +50,7 @@ describe('Graphql Integration Tests', () => {
                 );
                 assert(response.success, 'response not successful')
 
-                const queryResponse = await resolvers.siteResolvers.Query.site(
+                const queryResponse = await siteResolvers.Query.site(
                     null, { siteId }, context
                 )
 
@@ -59,7 +65,7 @@ describe('Graphql Integration Tests', () => {
             it('Should be able to create a post with no additional parameters', async function () {
                 const postTitle = 'Hello world! This is an empty post';
 
-                const response = await resolvers.postResolvers.Mutation.upsertPost(
+                const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
                             siteId,
@@ -71,7 +77,7 @@ describe('Graphql Integration Tests', () => {
                 assert(response.success, 'Response not successful')
                 assert(postId = response.post.id, 'Post id not present')
 
-                const queryResponse = await resolvers.postResolvers.Query.post(
+                const queryResponse = await postResolvers.Query.post(
                     null, { postId: postId }, context
                 )
                 assert.equal(queryResponse.id, postId)
@@ -80,7 +86,7 @@ describe('Graphql Integration Tests', () => {
 
             it('Should be able to mutate the post that it just created', async function () {
                 const newTitle = 'Hello world! This is an empty post that I just edited';
-                const response = await resolvers.postResolvers.Mutation.upsertPost(
+                const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
                             id: postId,
@@ -92,7 +98,7 @@ describe('Graphql Integration Tests', () => {
                 assert(response.success, 'Response not successful')
                 assert.equal(response.post.title, newTitle)
 
-                const queryResponse = await resolvers.postResolvers.Query.post(
+                const queryResponse = await postResolvers.Query.post(
                     null, { postId: postId }, context
                 )
                 assert.equal(queryResponse.id, postId)
@@ -100,7 +106,7 @@ describe('Graphql Integration Tests', () => {
             })
 
             it('Should be able to add categories to a post', async function () {
-                const response = await resolvers.postResolvers.Mutation.upsertPost(
+                const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
                             id: postId,
@@ -112,10 +118,10 @@ describe('Graphql Integration Tests', () => {
                 )
                 assert(response.success, "Response is not successful")
 
-                const postQueryResponse = await resolvers.postResolvers.Query.post(
+                const postQueryResponse = await postResolvers.Query.post(
                     null, { postId: postId }, context
                 )
-                const categoriesQueryResponse = await resolvers.categoryResolvers.Post.categories(
+                const categoriesQueryResponse = await categoryResolvers.Post.categories(
                     postQueryResponse, null, context
                 )
 
@@ -157,7 +163,7 @@ describe('Graphql Integration Tests', () => {
             it('Should be able to delete a category from a post', async function () {
 
                 console.log('visualCategoryId set to ', visualCategoryId)
-                const response = await resolvers.postResolvers.Mutation.upsertPost(
+                const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
                             id: postId,
@@ -185,7 +191,7 @@ describe('Graphql Integration Tests', () => {
 
             it('should be able to create a new post with categories', async function () {
                 console.log('visualCategoryId set to ', visualCategoryId)
-                const response = await resolvers.postResolvers.Mutation.upsertPost(
+                const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
                             siteId,
@@ -198,10 +204,10 @@ describe('Graphql Integration Tests', () => {
                 assert(otherPostId = response.post.id, 'response has no id?')
 
 
-                const postQueryResponse = await resolvers.postResolvers.Query.post(
+                const postQueryResponse = await postResolvers.Query.post(
                     null, { postId: otherPostId }, context
                 )
-                const categoriesQueryResponse = await resolvers.categoryResolvers.Post.categories(
+                const categoriesQueryResponse = await categoryResolvers.Post.categories(
                     postQueryResponse, null, context
                 )
 
@@ -231,7 +237,7 @@ describe('Graphql Integration Tests', () => {
                         }
                     ]
 
-                    const response = await resolvers.postResolvers.Mutation.upsertPost(
+                    const response = await postResolvers.Mutation.upsertPost(
                         null, { post }, context
                     )
 
@@ -245,7 +251,7 @@ describe('Graphql Integration Tests', () => {
                     assert.equal(dbSlices.length, 2)
 
                     // test resolvers for slice
-                    const resolvedPost = await resolvers.postResolvers.Query.post(
+                    const resolvedPost = await postResolvers.Query.post(
                         null, { postId: postId }, context
                     )
 
@@ -260,12 +266,12 @@ describe('Graphql Integration Tests', () => {
         })
 
         it('Should be able to delete the site', async function () {
-            const response = await resolvers.siteResolvers.Mutation.deleteSite(
+            const response = await siteResolvers.Mutation.deleteSite(
                 null, { siteId }, context
             )
             assert(response.success, 'response not successful')
 
-            const queryResponse = await resolvers.siteResolvers.Query.site(
+            const queryResponse = await siteResolvers.Query.site(
                 null, { id: siteId }, context
             )
 

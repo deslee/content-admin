@@ -222,14 +222,14 @@ class CmsDataSource extends DataSource {
         var postCategories = await data.PostCategory.findAll({
             where: {
                 categoryId: { [Op.eq]: categoryId }
-            },
-            include: {
-                model: data.Slice
             }
         })
         let result = await data.Post.findAll({
             where: {
                 id: { [Op.in]: postCategories.map(pc => pc.postId) }
+            },
+            include: {
+                model: data.Slice
             }
         })
         result = result.map(Mappers.Post)
