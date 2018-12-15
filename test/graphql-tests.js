@@ -158,6 +158,15 @@ describe('Graphql Integration Tests', () => {
                         assert.fail("unknown category associated with post")
                     }
                 })
+
+
+                // check get post for categories
+                const postForCategoriesQueryResposne = await postResolvers.Category.posts(
+                    postCategories[0].category, null, context
+                )
+
+                assert.equal(postForCategoriesQueryResposne.length, 1)
+                assert.equal(postForCategoriesQueryResposne[0].id, postId)
             })
 
             it('Should be able to delete a category from a post', async function () {
@@ -219,6 +228,14 @@ describe('Graphql Integration Tests', () => {
                 const blogCategory = categoriesQueryResponse.find(c => c.name !== visualCategoryName)
                 assert.equal(blogCategory.name, blogCategoryName)
                 assert(blogCategoryId = blogCategory.id, 'blog category has no id')
+
+                // check get post for categories
+                const postForCategoriesQueryResposne = await postResolvers.Category.posts(
+                    blogCategory, null, context
+                )
+
+                assert.equal(postForCategoriesQueryResposne.length, 1)
+                assert.equal(postForCategoriesQueryResposne[0].id, otherPostId)
             })
 
             describe('slices', () => {

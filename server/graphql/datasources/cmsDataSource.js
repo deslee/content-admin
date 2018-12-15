@@ -222,18 +222,15 @@ class CmsDataSource extends DataSource {
         var postCategories = await data.PostCategory.findAll({
             where: {
                 categoryId: { [Op.eq]: categoryId }
-            }
-        })
-        let result = await data.Post.findAll({
-            where: {
-                id: { [Op.in]: postCategories.map(pc => pc.postId) }
             },
             include: {
-                model: data.Slice
+                model: data.Post,
+                include: data.Slice
             }
         })
-        result = result.map(Mappers.Post)
-        return result
+        var posts = postCategories.map(pc => pc.post)
+        posts = posts.map(Mappers.Post)
+        return posts
     }
 
     async deleteSite(siteId) {
