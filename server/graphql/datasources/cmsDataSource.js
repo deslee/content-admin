@@ -11,7 +11,7 @@ const Mappers = {
         id: post.id,
         title: post.title,
         date: post.date,
-        slices: post.slice.map(Mappers.Slice)
+        slices: (post.slice || []).map(Mappers.Slice)
     }),
     Category: category => ({
         id: category.id,
@@ -76,6 +76,7 @@ class CmsDataSource extends DataSource {
     async upsertPost(post) {
         let response;
         if (!post.data) { post.data = {} }
+
         if (post.id) {
             await data.Post.update(post, { where: { id: { [Op.eq]: post.id } } })
             response = post;
@@ -86,7 +87,10 @@ class CmsDataSource extends DataSource {
             post.id = response.id
         }
 
-        if (post.categories && post.categories.length) {
+        if (!post.slices) post.slices = []
+        if (!post.categories) post.categories = []
+
+        if (post.categories.length) {
             // get all categories mentioned in post
             let foundCategories = await data.Category.findAll({
                 where: {
@@ -150,7 +154,9 @@ class CmsDataSource extends DataSource {
                     }
                 })
             }
+        }
 
+        if (post.slices.length) {
             // prepopulate required members if nonexistant
             post.slices.forEach(slice => { 
                 if (!slice.data) { slice.data = {} } 
@@ -203,6 +209,9 @@ class CmsDataSource extends DataSource {
         var result = await data.Post.find({
             where: {
                 id: { [Op.eq]: postId }
+            },
+            include: {
+                model: data.Slice
             }
         })
         result = Mappers.Post(result)
@@ -213,6 +222,9 @@ class CmsDataSource extends DataSource {
         var postCategories = await data.PostCategory.findAll({
             where: {
                 categoryId: { [Op.eq]: categoryId }
+            },
+            include: {
+                model: data.Slice
             }
         })
         let result = await data.Post.findAll({

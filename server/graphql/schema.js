@@ -1,5 +1,6 @@
 const { ApolloServer, gql } = require('apollo-server');
 const { typeDef: Asset } = require('./schema/asset')
+// TODO: import from single index.js and merge
 const { typeDef: Category, resolvers: categoryResolvers } = require('./schema/category')
 const { typeDef: Post, resolvers: postResolvers } = require('./schema/post')
 const { typeDef: Shared, resolvers: sharedResolvers } = require('./schema/shared')

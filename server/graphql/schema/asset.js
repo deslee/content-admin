@@ -17,5 +17,6 @@ module.exports = {
         success: Boolean!
         message: String
     }
-    `
+    `,
+    resolvers: () => {}
 }

@@ -216,6 +216,9 @@ Site.hasMany(PostCategory)
 PostCategory.belongsTo(Site)
 Post.hasMany(Slice)
 
+PostCategory.belongsTo(Category, { foreignKey: 'categoryId' })
+PostCategory.belongsTo(Post, { foreignKey: 'postId' })
+
 module.exports = {
     sequelize, Sequelize,
 
