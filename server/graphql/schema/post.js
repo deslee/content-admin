@@ -38,11 +38,17 @@ module.exports = {
             }
         },
         Mutation: {
-            upsertPost: async (_, { post }, { dataSources: { cmsData } }) => {
-                const upsertedPost = await cmsData.upsertPost(post);
+            upsertPost: async (_, args, { dataSources: { cmsData } }) => {
+                const upsertedPost = await cmsData.upsertPost(args.post);
                 return {
                     success: true,
                     post: upsertedPost
+                }
+            },
+            deletePost: async (_, args, { dataSources: { cmsData } }) => {
+                await cmsData.deletePost(args.postId);
+                return {
+                    success: true
                 }
             }
         },

@@ -30,15 +30,15 @@ module.exports = {
             }
         },
         Mutation: {
-            upsertSite: async (_, { site }, { dataSources: { cmsData } }) => {
-                const upsertedSite = await cmsData.upsertSite(site)
+            upsertSite: async (_, args, { dataSources: { cmsData } }) => {
+                const upsertedSite = await cmsData.upsertSite(args.site)
                 return {
                     success: true,
                     site: upsertedSite
                 }
             },
-            deleteSite: async (_, { siteId }, { dataSources: { cmsData } }) => {
-                await cmsData.deleteSite(siteId);
+            deleteSite: async (_, args, { dataSources: { cmsData } }) => {
+                await cmsData.deleteSite(args.siteId);
                 return {
                     success: true
                 }

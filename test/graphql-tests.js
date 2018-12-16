@@ -129,7 +129,6 @@ describe('Graphql Integration Tests', () => {
                 categoriesQueryResponse.forEach(createdCategory => {
                     if (createdCategory.name === visualCategoryName) {
                         assert(visualCategoryId = createdCategory.id, 'Category does not have an id')
-                        console.log('visualCategoryId set to ', visualCategoryId)
                     }
                     else if (createdCategory.name === animationCategoryName) {
                         assert(animationCategoryId = createdCategory.id, 'Category does not have an id')
@@ -170,8 +169,6 @@ describe('Graphql Integration Tests', () => {
             })
 
             it('Should be able to delete a category from a post', async function () {
-
-                console.log('visualCategoryId set to ', visualCategoryId)
                 const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
@@ -199,7 +196,6 @@ describe('Graphql Integration Tests', () => {
 
 
             it('should be able to create a new post with categories', async function () {
-                console.log('visualCategoryId set to ', visualCategoryId)
                 const response = await postResolvers.Mutation.upsertPost(
                     null, {
                         post: {
@@ -238,47 +234,58 @@ describe('Graphql Integration Tests', () => {
                 assert.equal(postForCategoriesQueryResposne[0].id, otherPostId)
             })
 
-            describe('slices', () => {
-                let videoSlice, paragraphSlice
-                it('should be able to add slices to a post', async function() {
-                    var post = await cmsData.getPost(postId);
-                    post.siteId = siteId
-                    post.slices = [
-                        {
-                            type: 'PARAGRAPH', 
-                            text: 'Hello world!'
-                        },
-                        {
-                            type: 'VIDEO', 
-                            url: "http://youtube.com/ajdsioaj"
-                        }
-                    ]
+            let videoSlice, paragraphSlice
+            it('should be able to add slices to a post', async function () {
+                var post = await cmsData.getPost(postId);
+                post.siteId = siteId
+                post.slices = [
+                    {
+                        type: 'PARAGRAPH',
+                        text: 'Hello world!'
+                    },
+                    {
+                        type: 'VIDEO',
+                        url: "http://youtube.com/ajdsioaj"
+                    }
+                ]
 
-                    const response = await postResolvers.Mutation.upsertPost(
-                        null, { post }, context
-                    )
+                const response = await postResolvers.Mutation.upsertPost(
+                    null, { post }, context
+                )
 
-                    assert(response.success, 'response is not successful')
-                    // assert database has two slices for the post
-                    const dbSlices = await data.Slice.findAll({
-                        where: {
-                            postId: postId
-                        }
-                    })
-                    assert.equal(dbSlices.length, 2)
-
-                    // test resolvers for slice
-                    const resolvedPost = await postResolvers.Query.post(
-                        null, { postId: postId }, context
-                    )
-
-                    assert.equal(resolvedPost.id, postId)
-                    assert.equal(resolvedPost.slices.length, 2)
-                    assert(paragraphSlice = resolvedPost.slices.find(s => s.type === 'PARAGRAPH'))
-                    assert(videoSlice = resolvedPost.slices.find(s => s.type === 'VIDEO'))
-                    assert.equal(paragraphSlice.text, 'Hello world!')
-                    assert.equal(videoSlice.url, 'http://youtube.com/ajdsioaj')
+                assert(response.success, 'response is not successful')
+                // assert database has two slices for the post
+                const dbSlices = await data.Slice.findAll({
+                    where: {
+                        postId: postId
+                    }
                 })
+                assert.equal(dbSlices.length, 2)
+
+                // test resolvers for slice
+                const resolvedPost = await postResolvers.Query.post(
+                    null, { postId: postId }, context
+                )
+
+                assert.equal(resolvedPost.id, postId)
+                assert.equal(resolvedPost.slices.length, 2)
+                assert(paragraphSlice = resolvedPost.slices.find(s => s.type === 'PARAGRAPH'))
+                assert(videoSlice = resolvedPost.slices.find(s => s.type === 'VIDEO'))
+                assert.equal(paragraphSlice.text, 'Hello world!')
+                assert.equal(videoSlice.url, 'http://youtube.com/ajdsioaj')
+            })
+
+            it('should be able to delete a post', async function () {
+                const response = await postResolvers.Mutation.deletePost(
+                    null, { postId: postId }, context
+                )
+                assert(response.success, 'response not successful')
+
+                const queryResponse = await postResolvers.Query.post(
+                    null, { id: postId }, context
+                )
+
+                assert(queryResponse === null, 'query response is not null?')
             })
         })
 

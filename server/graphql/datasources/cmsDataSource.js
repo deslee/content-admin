@@ -214,7 +214,7 @@ class CmsDataSource extends DataSource {
                 model: data.Slice
             }
         })
-        result = Mappers.Post(result)
+        result = result && Mappers.Post(result)
         return result
     }
 
@@ -236,7 +236,34 @@ class CmsDataSource extends DataSource {
     async deleteSite(siteId) {
         await data.Site.destroy({
             where: {
-                id: siteId
+                id: {
+                    [Op.eq]: siteId
+                }
+            }
+        })
+    }
+
+    async deletePost(postId) {
+        await data.PostCategory.destroy({
+            where: {
+                postId: {
+                    [Op.eq]: postId
+                }
+            }
+        })
+        await data.Slice.destroy({
+            where: {
+                postId: {
+                    [Op.eq]: postId
+                }
+            }
+        })
+
+        await data.Post.destroy({
+            where: {
+                id: {
+                    [Op.eq]: postId
+                }
             }
         })
     }
